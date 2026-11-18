@@ -1,0 +1,576 @@
+/* ==========================================================================
+   Project Pulse — dashboard styles
+   Owner: Designer. Built against the shared class contract (plan §6).
+   No external resources; system font stack; palette via custom properties.
+   ========================================================================== */
+
+/* ---------- Design tokens ---------- */
+:root {
+  /* Surfaces & text */
+  --color-page-bg: #eef2f7;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #d9e0ea;
+  --color-text: #0f172a;        /* 17.9:1 on white */
+  --color-text-muted: #475569;  /* 7.6:1 on white */
+  --color-accent: #4338ca;      /* indigo-700, 7.9:1 on white */
+  --color-focus: #2563eb;
+
+  /* Header band */
+  --color-header-from: #1e1b4b;
+  --color-header-to: #3730a3;
+  --color-header-text: #ffffff;
+  --color-header-subtle: #e0e7ff; /* >9:1 on header gradient */
+
+  /* Status badges (text on bg ≥ 7:1) */
+  --status-on-track-bg: #dcfce7;   --status-on-track-text: #14532d;   --status-on-track-dot: #16a34a;
+  --status-at-risk-bg: #fef3c7;    --status-at-risk-text: #78350f;    --status-at-risk-dot: #d97706;
+  --status-blocked-bg: #fee2e2;    --status-blocked-text: #7f1d1d;    --status-blocked-dot: #dc2626;
+  --status-completed-bg: #dbeafe;  --status-completed-text: #1e3a8a;  --status-completed-dot: #2563eb;
+  --status-unknown-bg: #e5e7eb;    --status-unknown-text: #1f2937;    --status-unknown-dot: #6b7280;
+
+  /* Priority (badge text on bg ≥ 7:1) */
+  --priority-high: #be123c;
+  --priority-high-bg: #ffe4e6;     --priority-high-text: #881337;
+  --priority-medium: #7c3aed;
+  --priority-medium-bg: #ede9fe;   --priority-medium-text: #4c1d95;
+  --priority-low: #94a3b8;
+  --priority-low-bg: #f1f5f9;      --priority-low-text: #334155;
+  --priority-unknown: #9ca3af;
+  --priority-unknown-bg: #f3f4f6;  --priority-unknown-text: #374151;
+
+  /* Messages */
+  --msg-info-bg: #eff6ff;   --msg-info-border: #93c5fd;   --msg-info-text: #1e3a8a;
+  --msg-empty-bg: #f8fafc;  --msg-empty-border: #cbd5e1;  --msg-empty-text: #334155;
+  --msg-error-bg: #fef2f2;  --msg-error-border: #fca5a5;  --msg-error-text: #7f1d1d;
+
+  /* Shape & depth */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 24px -6px rgba(15, 23, 42, 0.16), 0 4px 8px -4px rgba(15, 23, 42, 0.08);
+
+  /* Spacing & type */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --transition-fast: 150ms ease;
+  --dashboard-gap: var(--space-5);
+}
+
+/* The script toggles `hidden` on the grid; make sure layout rules never override it. */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%; /* respects user setting; 16px default */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-page-bg);
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Layout ---------- */
+.dashboard {
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dashboard-gap);
+}
+
+@media (min-width: 48rem) {
+  .dashboard {
+    --dashboard-gap: var(--space-6);
+    padding: var(--space-6) var(--space-6) 3rem;
+  }
+}
+
+/* Live region stays rendered (so announcements keep working) but collapses
+   its flex gap when it has no message. */
+.dashboard > [role="status"]:empty {
+  margin-bottom: calc(-1 * var(--dashboard-gap));
+}
+
+/* ---------- Header band ---------- */
+.dashboard-header {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--color-header-from) 0%, var(--color-header-to) 100%);
+  color: var(--color-header-text);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Decorative "pulse" glow, purely visual */
+.dashboard-header::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(165, 180, 252, 0.35) 0%, rgba(165, 180, 252, 0) 70%);
+  pointer-events: none;
+}
+
+@media (min-width: 48rem) {
+  .dashboard-header {
+    padding: var(--space-6) 2.5rem;
+  }
+}
+
+.dashboard-title,
+.dashboard-title h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(1.75rem, 1.3rem + 2vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-header-text);
+}
+
+.dashboard-subtitle {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-2);
+  max-width: 40rem;
+  font-size: 1.0625rem;
+  color: var(--color-header-subtle);
+}
+
+/* ---------- Summary strip ---------- */
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* Count value — supports common markup choices */
+.summary-item strong,
+.summary-item b,
+.summary-item dd,
+.summary-item .summary-value,
+.summary-item .summary-count {
+  order: -1;
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-item dt {
+  margin: 0;
+}
+
+/* Header-inside-summary support when summary is placed in the header band */
+.dashboard-header .dashboard-summary {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-5);
+}
+
+/* ---------- Card grid ---------- */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-grid > li {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+}
+
+/* ---------- Project card ---------- */
+.project-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 6px solid var(--priority-unknown);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow-wrap: anywhere;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.project-card:hover,
+.project-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Priority modifiers */
+.project-card--priority-high {
+  border-left: 8px solid var(--priority-high);
+  background:
+    linear-gradient(90deg, rgba(255, 228, 230, 0.55) 0%, rgba(255, 255, 255, 0) 35%),
+    var(--color-surface);
+}
+
+.project-card--priority-medium {
+  border-left: 6px solid var(--priority-medium);
+}
+
+.project-card--priority-low {
+  border-left: 4px solid var(--priority-low);
+  background: var(--color-surface-muted);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-card--priority-unknown {
+  border-left: 4px dashed var(--priority-unknown);
+}
+
+/* Card fields */
+.project-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.project-card--priority-low .project-name {
+  font-weight: 600;
+}
+
+.project-owner {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.project-summary {
+  color: var(--color-text);
+}
+
+.project-activity {
+  margin-top: auto; /* push activity toward card bottom for aligned rows */
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-page-bg);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.project-card--priority-low .project-activity {
+  background: #e9eef5;
+}
+
+.project-activity-label {
+  display: block;
+  margin: 0 0 var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.project-activity p,
+.project-activity dd,
+.project-activity dt {
+  margin: 0;
+}
+
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- Badges (shared) ---------- */
+.status-badge,
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  max-width: 100%;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* Status: colored dot + label (status never conveyed by color alone) */
+.status-badge::before {
+  content: "";
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge--on-track {
+  background: var(--status-on-track-bg);
+  color: var(--status-on-track-text);
+  border-color: var(--status-on-track-dot);
+}
+
+.status-badge--at-risk {
+  background: var(--status-at-risk-bg);
+  color: var(--status-at-risk-text);
+  border-color: var(--status-at-risk-dot);
+}
+
+.status-badge--blocked {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+  border-color: var(--status-blocked-dot);
+}
+
+.status-badge--completed {
+  background: var(--status-completed-bg);
+  color: var(--status-completed-text);
+  border-color: var(--status-completed-dot);
+}
+
+.status-badge--unknown {
+  background: var(--status-unknown-bg);
+  color: var(--status-unknown-text);
+  border-color: var(--status-unknown-dot);
+  border-style: dashed;
+}
+
+/* Priority: squarer shape to distinguish from status pills */
+.priority-badge {
+  border-radius: var(--radius-sm);
+}
+
+.priority-badge--high {
+  background: var(--priority-high-bg);
+  color: var(--priority-high-text);
+  border-color: var(--priority-high);
+}
+
+.priority-badge--medium {
+  background: var(--priority-medium-bg);
+  color: var(--priority-medium-text);
+  border-color: var(--priority-medium);
+}
+
+.priority-badge--low {
+  background: var(--priority-low-bg);
+  color: var(--priority-low-text);
+  border-color: var(--color-border);
+  font-weight: 600;
+}
+
+.priority-badge--unknown {
+  background: var(--priority-unknown-bg);
+  color: var(--priority-unknown-text);
+  border-color: var(--priority-unknown);
+  border-style: dashed;
+}
+
+/* ---------- State messages ---------- */
+.dashboard-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--msg-info-border);
+  border-left-width: 6px;
+  border-radius: var(--radius-md);
+  background: var(--msg-info-bg);
+  color: var(--msg-info-text);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+.dashboard-message:empty {
+  display: none;
+}
+
+.dashboard-message--loading {
+  background: var(--msg-info-bg);
+  border-color: var(--msg-info-border);
+  color: var(--msg-info-text);
+}
+
+.dashboard-message--loading::before {
+  content: "";
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.2rem;
+  border: 3px solid var(--msg-info-border);
+  border-top-color: var(--msg-info-text);
+  border-radius: 50%;
+  animation: pulse-spin 0.9s linear infinite;
+}
+
+.dashboard-message--empty {
+  justify-content: center;
+  padding: var(--space-6) var(--space-5);
+  background: var(--msg-empty-bg);
+  border: 2px dashed var(--msg-empty-border);
+  color: var(--msg-empty-text);
+  text-align: center;
+  box-shadow: none;
+}
+
+.dashboard-message--error {
+  background: var(--msg-error-bg);
+  border-color: var(--msg-error-border);
+  border-left-color: #b91c1c;
+  color: var(--msg-error-text);
+}
+
+.dashboard-message--error::before {
+  content: "!";
+  content: "!" / ""; /* decorative: hide from screen readers where supported */
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #b91c1c;
+  color: #ffffff;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@keyframes pulse-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Utilities ---------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ---------- Small screens (≤ 360px) ---------- */
+@media (max-width: 22.5rem) {
+  .dashboard {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .dashboard-header,
+  .project-card {
+    padding: var(--space-4);
+  }
+}
+
+/* ---------- Motion preferences ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .project-card:hover,
+  .project-card:focus-within {
+    transform: none;
+  }
+}
+
+/* ---------- Forced colors (Windows High Contrast) ---------- */
+@media (forced-colors: active) {
+  .project-card,
+  .status-badge,
+  .priority-badge,
+  .dashboard-message,
+  .summary-item {
+    border: 1px solid CanvasText;
+  }
+}

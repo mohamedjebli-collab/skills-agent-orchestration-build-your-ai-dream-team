@@ -1,0 +1,50 @@
+{
+  "projects": [
+    {
+      "name": "Checkout Redesign",
+      "owner": "Priya Natarajan",
+      "status": "on-track",
+      "recentActivity": "Merged PR #42 adding the new payment step on 2026-11-12",
+      "priority": "high",
+      "summary": "Simplifies checkout to three steps. Contributors can help with copy review and accessibility testing."
+    },
+    {
+      "name": "Mobile App Offline Sync",
+      "owner": "Diego Alvarez",
+      "status": "at-risk",
+      "recentActivity": "Conflict-resolution spike slipped one sprint on 2026-11-14",
+      "priority": "high",
+      "summary": "Lets field teams keep working without a connection. Needs help with sync edge-case tests."
+    },
+    {
+      "name": "Customer Data Platform Migration to the Unified Event Streaming Infrastructure (Phase Two: Historical Backfill)",
+      "owner": "Data Engineering Team",
+      "status": "blocked",
+      "recentActivity": "Waiting on security review of new storage credentials since 2026-11-10",
+      "priority": "medium",
+      "summary": "Moves legacy analytics events into the shared streaming pipeline so every team reads from one source."
+    },
+    {
+      "name": "Docs Site Search",
+      "owner": "Mona Lisa Octocat",
+      "status": "completed",
+      "recentActivity": "Shipped full-text search to production on 2026-11-08",
+      "priority": "medium"
+    },
+    {
+      "name": "Internal Design Tokens",
+      "owner": "Design Systems Guild",
+      "status": "on-track",
+      "recentActivity": "Published color and spacing tokens v0.3 on 2026-11-16",
+      "priority": "low",
+      "summary": "Shared tokens keep product UIs consistent. Good first issues are labeled in the repo."
+    },
+    {
+      "name": "Legacy Report Cleanup",
+      "owner": "Sam Okafor",
+      "status": "completed",
+      "recentActivity": "Archived 14 unused reports on 2026-11-03",
+      "priority": "low"
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Pulse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="dashboard">
+    <header class="dashboard-header">
+      <h1 class="dashboard-title">Project Pulse</h1>
+      <p class="dashboard-subtitle">Status, owners, recent activity and priority for every team project at a glance.</p>
+    </header>
+
+    <section class="dashboard-summary" aria-label="Project summary">
+      <p class="summary-item"><strong id="summary-total">0</strong> <span>Total projects</span></p>
+      <p class="summary-item"><strong id="summary-at-risk">0</strong> <span>At risk</span></p>
+      <p class="summary-item"><strong id="summary-blocked">0</strong> <span>Blocked</span></p>
+    </section>
+
+    <div id="dashboard-status" role="status" aria-live="polite">
+      <p class="dashboard-message dashboard-message--loading">Loading projects…</p>
+    </div>
+
+    <ul class="project-grid" id="project-grid" aria-label="Projects"></ul>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // Data source: project-data.json, an object with a "projects" array.
+      // Each project has: name, owner, status, recentActivity, priority, optional summary.
+      var DATA_URL = "project-data.json";
+      var PLACEHOLDER = "Not provided";
+      var KNOWN_STATUSES = ["on-track", "at-risk", "blocked", "completed"];
+      var KNOWN_PRIORITIES = ["high", "medium", "low"];
+      var STATUS_LABELS = {
+        "on-track": "On track",
+        "at-risk": "At risk",
+        "blocked": "Blocked",
+        "completed": "Completed"
+      };
+      var PRIORITY_LABELS = { high: "High", medium: "Medium", low: "Low" };
+
+      var statusRegion = document.getElementById("dashboard-status");
+      var grid = document.getElementById("project-grid");
+
+      function normalize(value) {
+        if (typeof value !== "string") {
+          return "";
+        }
+        return value.trim().toLowerCase().replace(/\s+/g, "-");
+      }
+
+      function textOrPlaceholder(value) {
+        if (typeof value === "string" && value.trim() !== "") {
+          return value.trim();
+        }
+        if (typeof value === "number") {
+          return String(value);
+        }
+        return PLACEHOLDER;
+      }
+
+      function showMessage(kind, text) {
+        statusRegion.replaceChildren();
+        if (!kind) {
+          return;
+        }
+        var message = document.createElement("p");
+        message.className = "dashboard-message dashboard-message--" + kind;
+        message.textContent = text;
+        statusRegion.appendChild(message);
+      }
+
+      function setCounts(total, atRisk, blocked) {
+        document.getElementById("summary-total").textContent = String(total);
+        document.getElementById("summary-at-risk").textContent = String(atRisk);
+        document.getElementById("summary-blocked").textContent = String(blocked);
+      }
+
+      function createElement(tag, className, text) {
+        var element = document.createElement(tag);
+        if (className) {
+          element.className = className;
+        }
+        if (text !== undefined) {
+          element.textContent = text;
+        }
+        return element;
+      }
+
+      function buildCard(project) {
+        var safeProject = project && typeof project === "object" ? project : {};
+
+        var statusKey = normalize(safeProject.status);
+        var statusModifier = KNOWN_STATUSES.indexOf(statusKey) !== -1 ? statusKey : "unknown";
+        var statusText = statusModifier === "unknown"
+          ? textOrPlaceholder(safeProject.status)
+          : STATUS_LABELS[statusModifier];
+
+        var priorityKey = normalize(safeProject.priority);
+        var priorityModifier = KNOWN_PRIORITIES.indexOf(priorityKey) !== -1 ? priorityKey : "unknown";
+        var priorityText = priorityModifier === "unknown"
+          ? textOrPlaceholder(safeProject.priority)
+          : PRIORITY_LABELS[priorityModifier];
+
+        var item = document.createElement("li");
+        var card = createElement("article", "project-card project-card--priority-" + priorityModifier);
+
+        card.appendChild(createElement("h2", "project-name", textOrPlaceholder(safeProject.name)));
+        card.appendChild(createElement("p", "project-owner", "Owner: " + textOrPlaceholder(safeProject.owner)));
+
+        if (typeof safeProject.summary === "string" && safeProject.summary.trim() !== "") {
+          card.appendChild(createElement("p", "project-summary", safeProject.summary.trim()));
+        }
+
+        var activity = createElement("p", "project-activity");
+        activity.appendChild(createElement("span", "project-activity-label", "Recent activity"));
+        activity.appendChild(document.createTextNode(" " + textOrPlaceholder(safeProject.recentActivity)));
+        card.appendChild(activity);
+
+        var meta = createElement("p", "project-meta");
+        meta.appendChild(createElement("span", "status-badge status-badge--" + statusModifier, "Status: " + statusText));
+        meta.appendChild(document.createTextNode(" "));
+        meta.appendChild(createElement("span", "priority-badge priority-badge--" + priorityModifier, "Priority: " + priorityText));
+        card.appendChild(meta);
+
+        item.appendChild(card);
+        return item;
+      }
+
+      function render(projects) {
+        grid.replaceChildren();
+
+        var atRisk = 0;
+        var blocked = 0;
+        projects.forEach(function (project) {
+          var status = normalize(project && project.status);
+          if (status === "at-risk") {
+            atRisk += 1;
+          } else if (status === "blocked") {
+            blocked += 1;
+          }
+          try {
+            grid.appendChild(buildCard(project));
+          } catch (cardError) {
+            console.error("Project Pulse: could not render a project", project, cardError);
+          }
+        });
+        setCounts(projects.length, atRisk, blocked);
+
+        if (projects.length === 0) {
+          grid.hidden = true;
+          showMessage("empty", "No projects yet. Add projects to project-data.json to see them here.");
+        } else {
+          grid.hidden = false;
+          showMessage(null);
+        }
+      }
+
+      function showError(text, details) {
+        grid.replaceChildren();
+        grid.hidden = true;
+        setCounts(0, 0, 0);
+        showMessage("error", text);
+        if (details) {
+          console.error("Project Pulse:", details);
+        }
+      }
+
+      function load() {
+        if (window.location.protocol === "file:") {
+          showError(
+            "Project Pulse can't load its data when opened as a local file. " +
+            "In VS Code, open Run and Debug and start \"Run Project Pulse Dashboard\", then view the page it opens."
+          );
+          return;
+        }
+
+        fetch(DATA_URL, { cache: "no-store" })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Request for " + DATA_URL + " failed with HTTP " + response.status + " " + response.statusText);
+            }
+            return response.text();
+          })
+          .then(function (bodyText) {
+            var data;
+            try {
+              data = JSON.parse(bodyText);
+            } catch (parseError) {
+              showError("Project data is not valid JSON. Check project-data.json for syntax errors.", parseError);
+              return;
+            }
+            if (!data || typeof data !== "object" || !Array.isArray(data.projects)) {
+              showError("Project data is invalid: project-data.json must contain a \"projects\" array.", data);
+              return;
+            }
+            render(data.projects);
+          })
+          .catch(function (error) {
+            showError("Could not load project data. Make sure the dashboard is running with \"Run Project Pulse Dashboard\" and try again.", error);
+          });
+      }
+
+      load();
+    })();
+  </script>
+</body>
+</html>
